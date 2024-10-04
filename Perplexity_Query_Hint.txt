@@ -1,0 +1,109 @@
+Here is my ERC20 token contract :
+
+```
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.27;
+
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+/**
+ * @title This is our generated token using the OpenZeppelin contracts.
+ * @author Soumil Vavikar
+ * @notice NA
+ */
+contract SV15Token is ERC20 {
+    // The instance of ERC20 token from the Openzeppelin libarary contains all the functions implemented.
+
+    constructor(
+        uint256 initialSupply
+    ) ERC20(/* Name */ "SV15Token", /* Symbol */ "SV15T") {
+        _mint(msg.sender, initialSupply);
+    }
+}
+```
+
+Here are some initial tests written in solidity 
+
+```
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.27;
+
+import {DeploySV15Token} from "../script/DeploySV15Token.s.sol";
+import {SV15Token} from "../src/SV15Token.sol";
+import {Test, console} from "forge-std/Test.sol";
+
+/**
+ * @title This is a test contract to test the SV15Token.sol
+ * @author Soumil Vavikar
+ * @notice NA
+ */
+contract SV15TokenTest is Test {
+    // Starting amount for Soumil
+    uint256 SOUMIL_STARTING_AMOUNT = 100 ether;
+    // 1 million tokens with 18 decimal places
+    uint256 public constant INITIAL_SUPPLY = 100000 ether;
+
+    SV15Token public sv15Token;
+    DeploySV15Token public deployer;
+    address public deployerAddress;
+
+    address soumil;
+    address siddhant;
+
+    /**
+     * Initial test setup
+     */
+    function setUp() public {
+        deployer = new DeploySV15Token();
+
+        sv15Token = new SV15Token(INITIAL_SUPPLY);
+        // Here the token contract transfers initial supply of the tokens to the message sender
+        sv15Token.transfer(msg.sender, INITIAL_SUPPLY);
+
+        soumil = makeAddr("soumil");
+        siddhant = makeAddr("siddhant");
+
+        // Here the message sender sends the starting amount to Soumil
+        vm.prank(msg.sender);
+        sv15Token.transfer(soumil, SOUMIL_STARTING_AMOUNT);
+    }
+
+    /**
+     * This function just tests the initial setup to confirm the sv15Token's total supply == initial supply
+     */
+    function testInitialSupply() public view {
+        assertEq(sv15Token.totalSupply(), deployer.INITIAL_SUPPLY());
+    }
+
+    /**
+     * This function tests the allowance method, where Soumil allows Siddhant to spend some tokens on his behalf.
+     */
+    function testAllowances() public {
+        uint256 initialAllowance = 1000;
+
+        // Soumil approves Siddhant to spend tokens on his behalf
+
+        vm.prank(soumil);
+        sv15Token.approve(siddhant, initialAllowance);
+        uint256 transferAmount = 500;
+
+        vm.prank(siddhant);
+        sv15Token.transferFrom(soumil, siddhant, transferAmount);
+
+        assertEq(sv15Token.balanceOf(siddhant), transferAmount);
+        assertEq(
+            sv15Token.balanceOf(soumil),
+            SOUMIL_STARTING_AMOUNT - transferAmount
+        );
+    }
+
+    // can you get the coverage up?
+}
+```
+
+Can you write the rest of the tests? Please include tests for:
+
+- Allowances
+- transfers
+- anything else that might be important
